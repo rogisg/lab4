@@ -1,133 +1,121 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
+#include <deque>
+#include <algorithm>
 #include <string>
-#include <limits>
 
 using namespace std;
 
-// Задание 1
-float mean(const vector<float>& v) {
-    if (v.empty()) return 0;
-    float sum = 0;
-    for (float num : v) sum += num;
-    return sum / v.size();
-}
+class Book {
+private:
+    string author;
+    string title;
+    string publisher;
+    int year;
+    int pages;
 
-// Задание 2
-pair<float, float> minMax(const vector<float>& v) {
-    if (v.empty()) return {numeric_limits<float>::max(), numeric_limits<float>::min()};
+public:
+    // Конструкторы
+    Book() : author(""), title(""), publisher(""), year(0), pages(0) {}
     
-    float min_val = v[0], max_val = v[0];
-    for (float num : v) {
-        if (num < min_val) min_val = num;
-        if (num > max_val) max_val = num;
-    }
-    return {min_val, max_val};
-}
-
-// Задание 3
-int argmax(const vector<float>& v) {
-    if (v.empty()) return -1;
+    Book(const string& a, const string& t, const string& p, int y, int pg) 
+        : author(a), title(t), publisher(p), year(y), pages(pg) {}
     
-    int max_index = 0;
-    for (int i = 1; i < v.size(); i++) {
-        if (v[i] > v[max_index]) max_index = i;
-    }
-    return max_index;
-}
-
-// Задание 4
-void sort(vector<float>& v) {
-    for (int i = 0; i < v.size(); i++) {
-        for (int j = i + 1; j < v.size(); j++) {
-            if (v[i] < v[j]) {
-                float temp = v[i];
-                v[i] = v[j];
-                v[j] = temp;
-            }
+    // Конструктор копирования
+    Book(const Book& other) 
+        : author(other.author), title(other.title), 
+          publisher(other.publisher), year(other.year), pages(other.pages) {}
+    
+    // Оператор присваивания
+    Book& operator=(const Book& other) {
+        if (this != &other) {
+            author = other.author;
+            title = other.title;
+            publisher = other.publisher;
+            year = other.year;
+            pages = other.pages;
         }
+        return *this;
     }
-}
-
-// Задание 5
-bool remove_first_negative_element(vector<int>& v, int& removed_element) {
-    for (int i = 0; i < v.size(); i++) {
-        if (v[i] < 0) {
-            removed_element = v[i];
-            v.erase(v.begin() + i);
-            return true;
+    
+    // Геттеры
+    string getAuthor() const { return author; }
+    string getTitle() const { return title; }
+    string getPublisher() const { return publisher; }
+    int getYear() const { return year; }
+    int getPages() const { return pages; }
+    
+    // Перегрузка оператора вывода
+    friend ostream& operator<<(ostream& os, const Book& book) {
+        os << "Автор: " << book.author 
+           << ", Название: " << book.title 
+           << ", Издательство: " << book.publisher 
+           << ", Год: " << book.year 
+           << ", Страниц: " << book.pages;
+        return os;
+    }
+    
+    // Функторы для сортировки
+    struct SortByAuthor {
+        bool operator()(const Book& a, const Book& b) const {
+            return a.getAuthor() < b.getAuthor();
         }
-    }
-    removed_element = 0;
-    return false;
-}
-
-// Задание 6
-string replace(const string& str, const string& old_s, const string& new_s) {
-    string result = str;
-    size_t pos = 0;
-    while ((pos = result.find(old_s, pos)) != string::npos) {
-        result.replace(pos, old_s.length(), new_s);
-        pos += new_s.length();
-    }
-    return result;
-}
-
-// Задание 7
-vector<string> split(const string& s, char sep) {
-    vector<string> result;
-    string current;
-    for (char c : s) {
-        if (c == sep) {
-            if (!current.empty()) {
-                result.push_back(current);
-                current.clear();
-            }
-        } else {
-            current += c;
+    };
+    
+    struct SortByTitle {
+        bool operator()(const Book& a, const Book& b) const {
+            return a.getTitle() < b.getTitle();
         }
-    }
-    if (!current.empty()) result.push_back(current);
-    return result;
-}
-
-// Задание 8
-string join(const vector<string>& v, const string& sep) {
-    string result;
-    for (int i = 0; i < v.size(); i++) {
-        result += v[i];
-        if (i != v.size() - 1) result += sep;
-    }
-    return result;
-}
+    };
+};
 
 int main() {
-    // Примеры использования функций
-    vector<float> v1 = {1.5, 2.5, 3.5};
-    cout << mean(v1) << endl;
-
-    auto mm = minMax(v1);
-    cout << mm.first << " " << mm.second << endl;
-
-    cout << argmax(v1) << endl;
-
-    sort(v1);
-    for (float num : v1) cout << num << " ";
-    cout << endl;
-
-    vector<int> v2 = {1, -2, 3, -4};
-    int removed;
-    if (remove_first_negative_element(v2, removed)) {
-        cout << "Removed: " << removed << endl;
+    vector<Book> booksVector;
+    deque<Book> booksDeque;
+    
+    // Чтение из файла
+    ifstream input("input.txt");
+    if (input.is_open()) {
+        string author, title, publisher;
+        int year, pages;
+        
+        while (getline(input, author) && 
+               getline(input, title) && 
+               getline(input, publisher) && 
+               input >> year >> pages) {
+            input.ignore(); // Пропустить символ новой строки
+            booksVector.emplace_back(author, title, publisher, year, pages);
+        }
+        input.close();
     }
-
-    string s = "Can you can a can as a canner can can a can?";
-    cout << replace(s, "can", "CAN") << endl;
-
-    vector<string> words = split(s, ' ');
-    for (const string& word : words) cout << word << endl;
-
-    cout << join(words, " ") << endl;
-
+    
+    // Вывод исходного контейнера
+    ofstream output("output.txt");
+    output << "Исходный контейнер (vector):\n";
+    for (const auto& book : booksVector) {
+        output << book << "\n";
+    }
+    
+    // Сортировка по ФИО автора (вариант 13)
+    sort(booksVector.begin(), booksVector.end(), Book::SortByAuthor());
+    
+    // Вывод отсортированного контейнера
+    output << "\nКонтейнер после сортировки по автору:\n";
+    for (const auto& book : booksVector) {
+        output << book << "\n";
+    }
+    
+    // Копирование в deque
+    copy(booksVector.begin(), booksVector.end(), back_inserter(booksDeque));
+    
+    // Вывод скопированного контейнера
+    output << "\nКонтейнер после копирования в deque:\n";
+    for (const auto& book : booksDeque) {
+        output << book << "\n";
+    }
+    
+    output.close();
+    
     return 0;
 }
